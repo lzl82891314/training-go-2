@@ -5,6 +5,7 @@ import (
 	"bookstore/store"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
@@ -26,7 +27,8 @@ func CreateStoreServer(addr string, s store.Store) *StoreServer {
 	router.HandleFunc("/book", srv.modifyHandler).Methods("PUT")
 	router.HandleFunc("/book/{key}", srv.queryHandler).Methods("GET")
 	router.HandleFunc("/book", srv.queryAllHandler).Methods("GET")
-
+	router.HandleFunc("/*", srv.rootHandler).Methods("GET").Methods("POST")
+	router.NotFoundHandler = http.HandlerFunc(srv.notfoundHandler)
 	srv.server.Handler = middleware.Logging(router)
 	return srv
 }
@@ -56,79 +58,98 @@ func (s *StoreServer) Shutdown(ctx context.Context) error {
 	return s.server.Shutdown(ctx)
 }
 
-func (s StoreServer) rootHandler(w http.ResponseWriter, req *http.Request) {
-	response(w, "hello, world")
+func (s *StoreServer) rootHandler(w http.ResponseWriter, req *http.Request) {
+	response(w, "hello, world", nil)
+}
+
+func (s *StoreServer) notfoundHandler(w http.ResponseWriter, req *http.Request) {
+	resp := &ResponseDto{
+		Code:      http.StatusNotFound,
+		Message:   "service not found",
+		Data:      nil,
+		Timestamp: time.Now().UnixMilli(),
+	}
+	doResponse(w, resp)
 }
 
 func (s *StoreServer) insertHandler(w http.ResponseWriter, req *http.Request) {
 	decoder := json.NewDecoder(req.Body)
 	var book store.Book
 	if err := decoder.Decode(&book); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		response(w, nil, err)
 		return
 	}
 
-	if err := s.store.Insert(&book); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+	err := s.store.Insert(&book)
+	response(w, "insert ok", err)
 }
 
 func (s *StoreServer) removeHandler(w http.ResponseWriter, req *http.Request) {
 	key, ok := mux.Vars(req)["key"]
 	if !ok {
-		http.Error(w, fmt.Sprintf("the book not found by key: %s", key), http.StatusBadRequest)
-	}
-	if err := s.store.Remove(key); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		response(w, nil, errors.New(fmt.Sprintf("the book not found by key: %s", key)))
 		return
 	}
+	err := s.store.Remove(key)
+	response(w, "remove ok", err)
 }
 
 func (s *StoreServer) modifyHandler(w http.ResponseWriter, req *http.Request) {
 	decoder := json.NewDecoder(req.Body)
 	var book store.Book
 	if err := decoder.Decode(&book); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		response(w, nil, err)
 		return
 	}
-	if err := s.store.Modify(&book); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+	err := s.store.Modify(&book)
+	response(w, "modify ok", err)
 }
 
 func (s *StoreServer) queryHandler(w http.ResponseWriter, req *http.Request) {
 	key, ok := mux.Vars(req)["key"]
 	if !ok {
-		http.Error(w, fmt.Sprintf("the book not found by key: %s", key), http.StatusBadRequest)
+		response(w, nil, errors.New(fmt.Sprintf("the book not found by key: %s", key)))
 		return
 	}
 	book, err := s.store.Query(key)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	response(w, book)
+	response(w, book, err)
 }
 
 func (s *StoreServer) queryAllHandler(w http.ResponseWriter, req *http.Request) {
 	books, err := s.store.QueryAll()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	response(w, books)
+	response(w, books, err)
 }
 
-func response(w http.ResponseWriter, v interface{}) {
-	data, err := json.Marshal(v)
+type ResponseDto struct {
+	Code      int         `json:"code"`
+	Message   string      `json:"message"`
+	Data      interface{} `json:"data"`
+	Timestamp int64       `json:"timestamp"`
+}
+
+func response(w http.ResponseWriter, v interface{}, err error) {
+	resp := &ResponseDto{
+		Timestamp: time.Now().UnixMilli(),
+	}
+	if err == nil {
+		resp.Code = http.StatusOK
+		resp.Message = "ok"
+		resp.Data = v
+	} else {
+		resp.Code = http.StatusBadRequest
+		resp.Message = err.Error()
+		resp.Data = nil
+	}
+	doResponse(w, resp)
+}
+
+func doResponse(w http.ResponseWriter, resp *ResponseDto) {
+	data, err := json.Marshal(resp)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
-
 	if _, err := w.Write(data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
