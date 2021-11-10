@@ -2,7 +2,7 @@ package main
 
 import (
 	"toy-web"
-	"toy-web/internal/toyserver"
+	"toy-web/internal/v1/toyserver"
 )
 
 func main() {

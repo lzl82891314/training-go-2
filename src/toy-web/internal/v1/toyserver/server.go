@@ -22,6 +22,7 @@ func (ts *ToyServer) Shutdown() error {
 
 func (ts *ToyServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	ctx := tw.CreateContext(w, req)
+	ts.middleware(ctx)
 	handler, ok := ts.Router.Find(ctx.Req.URL.Path, ctx.Req.Method)
 	if !ok {
 		ctx.NotFoundResponse(fmt.Sprintf("route handler was not registed: %s", ctx.Req.URL.Path))

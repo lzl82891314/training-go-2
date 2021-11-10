@@ -3,7 +3,7 @@ package toyserver
 import (
 	"log"
 	tw "toy-web"
-	v1 "toy-web/internal/toyrouter/v1"
+	"toy-web/internal/v1/toyrouter"
 )
 
 type ToyBuilder struct {
@@ -14,7 +14,7 @@ type ToyBuilder struct {
 func CreateToyBuilder() *ToyBuilder {
 	return &ToyBuilder{
 		middlewares: make([]tw.Middleware, 0, 5),
-		Router:      v1.CreateToyRouter(),
+		Router:      toyrouter.CreateToyRouter(),
 	}
 }
 
