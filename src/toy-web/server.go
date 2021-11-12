@@ -2,7 +2,7 @@ package toy_web
 
 type Server interface {
 	Start(addr string) error
-	Shutdown() error
+	Router
 }
 
 type ServerBuilder interface {

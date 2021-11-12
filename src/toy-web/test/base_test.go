@@ -3,7 +3,7 @@ package test
 import (
 	"testing"
 	"toy-web"
-	"toy-web/internal/v1/toyserver"
+	"toy-web/internal/toyserver"
 )
 
 func TestCreateServerBuilder(t *testing.T) {

@@ -1,25 +1,26 @@
-package toyrouter
+package v1
 
 import (
 	"fmt"
 	"strings"
 	"sync"
 	tw "toy-web"
+	"toy-web/internal/toyserver/builder"
 )
 
 // 第一种路由实现为强硬匹配，即：
 // 只能路由类似于Route("home/index", handler)这类的实现
 // 不支持通配符，不支持静态资源，不支持正则匹配
 
+func init() {
+	builder.Register("v1", &ToyRouter{})
+}
+
 type ToyRouter struct {
 	routeMap sync.Map // 使用线程安全的Map
 }
 
-func CreateToyRouter() tw.Router {
-	return &ToyRouter{}
-}
-
-func (m *ToyRouter) Route(pattern, method string, handleFunc tw.HandlerFunc) error {
+func (m *ToyRouter) Map(pattern, method string, handleFunc tw.HandlerFunc) error {
 	pattern = strings.Trim(pattern, "/")
 	key := generateKey(pattern, method)
 	_, ok := m.routeMap.Load(key)

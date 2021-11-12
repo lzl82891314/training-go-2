@@ -1,20 +1,28 @@
 package main
 
 import (
-	"toy-web"
-	"toy-web/internal/v1/toyserver"
+	"fmt"
+	tw "toy-web"
+	_ "toy-web/internal/toyrouter/v1"
+	"toy-web/internal/toyserver/builder"
 )
 
 func main() {
-	builder := toyserver.CreateToyBuilder()
-	builder.UseRoute("home/index", "GET", func(ctx *toy_web.Context) {
-		ctx.Response("hello, world", nil)
+	builder.Use(func(next tw.HandlerFunc) tw.HandlerFunc {
+		return func(ctx *tw.Context) {
+			fmt.Println("hello middleware")
+			next(ctx)
+		}
 	})
-	build, err := builder.Build("testing_server")
+	server, err := builder.Build("testing_server")
 	if err != nil {
 		panic(err)
 	}
-	err = build.Start("localhost:8080")
+
+	server.Map("/", "GET", func(ctx *tw.Context) {
+		ctx.Response("hello, world", nil)
+	})
+	err = server.Start("localhost:8080")
 	if err != nil {
 		panic(err)
 	}

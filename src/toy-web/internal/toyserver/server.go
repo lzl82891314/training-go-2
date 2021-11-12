@@ -7,22 +7,22 @@ import (
 )
 
 type ToyServer struct {
-	Name string
+	Name       string
+	Middleware tw.HandlerFunc
 	tw.Router
-	middleware tw.HandlerFunc
 }
 
 func (ts *ToyServer) Start(addr string) error {
 	return http.ListenAndServe(addr, ts)
 }
 
-func (ts *ToyServer) Shutdown() error {
-	panic("implement me")
+func (ts *ToyServer) Map(pattern, method string, handlerFunc tw.HandlerFunc) error {
+	return ts.Router.Map(pattern, method, handlerFunc)
 }
 
 func (ts *ToyServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	ctx := tw.CreateContext(w, req)
-	ts.middleware(ctx)
+	ts.Middleware(ctx)
 	handler, ok := ts.Router.Find(ctx.Req.URL.Path, ctx.Req.Method)
 	if !ok {
 		ctx.NotFoundResponse(fmt.Sprintf("route handler was not registed: %s", ctx.Req.URL.Path))
