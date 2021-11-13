@@ -4,29 +4,29 @@ import (
 	"fmt"
 	tw "toy-web"
 	_ "toy-web/internal/toyrouter/v1"
-	"toy-web/internal/toyserver/builder"
+	"toy-web/internal/toyserver"
 )
 
 func main() {
-	builder.Use(func(next tw.HandlerFunc) tw.HandlerFunc {
+	toyserver.Use(func(next tw.Action) tw.Action {
 		return func(ctx *tw.Context) {
 			fmt.Println("hello middleware")
 			next(ctx)
 		}
 	})
-	server, err := builder.Build("testing_server")
+	server, err := toyserver.Build("testing_server")
 	if err != nil {
 		panic(err)
 	}
 
 	server.Map("/", "GET", func(ctx *tw.Context) {
-		ctx.Response("hello, world", nil)
+		ctx.Ok("hello, world")
 	})
 	server.Map("hello/*", "GET", func(ctx *tw.Context) {
-		ctx.Response("hello, *", nil)
+		ctx.Ok("hello, *")
 	})
 	server.Map("hello/jeffery", "GET", func(ctx *tw.Context) {
-		ctx.Response("hello, jeffery", nil)
+		ctx.Ok("hello, jeffery")
 	})
 	err = server.Start("localhost:8080")
 	if err != nil {

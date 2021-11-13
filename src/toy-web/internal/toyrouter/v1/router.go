@@ -13,17 +13,17 @@ import (
 
 func init() {
 	factory.Register("v1", &ToyRouter{
-		router: make(map[string]tw.HandlerFunc, 5),
+		router: make(map[string]tw.Action, 5),
 	})
 }
 
 var _ tw.Router = &ToyRouter{}
 
 type ToyRouter struct {
-	router map[string]tw.HandlerFunc
+	router map[string]tw.Action
 }
 
-func (m *ToyRouter) Map(pattern, method string, handleFunc tw.HandlerFunc) error {
+func (m *ToyRouter) Map(pattern, method string, handleFunc tw.Action) error {
 	pattern = strings.Trim(pattern, "/")
 	key := generateKey(pattern, method)
 	_, ok := m.router[key]
@@ -34,7 +34,7 @@ func (m *ToyRouter) Map(pattern, method string, handleFunc tw.HandlerFunc) error
 	return nil
 }
 
-func (m *ToyRouter) Match(path, method string) (tw.HandlerFunc, bool) {
+func (m *ToyRouter) Match(path, method string) (tw.Action, bool) {
 	purePath := strings.Trim(path, "/")
 	key := generateKey(purePath, method)
 	load, ok := m.router[key]

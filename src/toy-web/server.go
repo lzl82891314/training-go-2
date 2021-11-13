@@ -7,6 +7,6 @@ type Server interface {
 
 type ServerBuilder interface {
 	UseMiddleware(middleware Middleware) ServerBuilder
-	UseRoute(pattern, method string, handlerFunc HandlerFunc) ServerBuilder
+	UseRoute(pattern, method string, action Action) ServerBuilder
 	Build(name string) (Server, error)
 }

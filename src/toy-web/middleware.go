@@ -1,3 +1,3 @@
 package toy_web
 
-type Middleware func(next HandlerFunc) HandlerFunc
+type Middleware func(next Action) Action

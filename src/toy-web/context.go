@@ -14,8 +14,6 @@ type Context struct {
 	ctx context.Context
 }
 
-type HandlerFunc func(ctx *Context)
-
 type ResponseDto struct {
 	Code      int         `json:"code"`
 	Message   string      `json:"message"`
@@ -51,6 +49,10 @@ func (ctx *Context) Json(s int, v interface{}, m string) error {
 	ctx.w.WriteHeader(s)
 	_, err = ctx.w.Write(data)
 	return err
+}
+
+func (ctx *Context) Ok(v interface{}) error {
+	return ctx.Json(http.StatusOK, v, "ok")
 }
 
 func (ctx *Context) NotFound(m string) error {

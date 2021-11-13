@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	n := 1000
+	n := 10
 
 	v1 := calFib(&implement.FibV1{}, n)
 	fmt.Printf("算法 FibV1 计算 n=%v 的结果为：%v\n", n, v1)

@@ -15,7 +15,7 @@ import (
 
 func init() {
 	factory.Register("v2", &ToyRouter{
-		router: CreateTreeNode("/"),
+		router: NewTree("/"),
 	})
 }
 
@@ -23,9 +23,9 @@ type ToyRouter struct {
 	router *TreeNode
 }
 
-func (t *ToyRouter) Map(pattern, method string, handleFunc tw.HandlerFunc) error {
+func (t *ToyRouter) Map(pattern, method string, action tw.Action) error {
 	if pattern == "/" {
-		t.router.handlers[strings.ToUpper(method)] = handleFunc
+		t.router.handlers[strings.ToUpper(method)] = action
 		return nil
 	}
 	if err := pathValidator(pattern); err != nil {
@@ -57,7 +57,7 @@ func (t *ToyRouter) Map(pattern, method string, handleFunc tw.HandlerFunc) error
 	}
 	// 生成子树，如果完美匹配则在函数内直接退出
 	cur = treeGenerator(cur, p, segments)
-	cur.handlers[strings.ToUpper(method)] = handleFunc
+	cur.handlers[strings.ToUpper(method)] = action
 	return nil
 }
 
@@ -80,21 +80,21 @@ func treeGenerator(node *TreeNode, p int, segments []string) *TreeNode {
 		return node
 	}
 	segment := segments[p]
-	cur := CreateTreeNode(segment)
+	cur := NewTree(segment)
 	node.children = append(node.children, cur)
 	return treeGenerator(cur, p+1, segments)
 }
 
-func (t *ToyRouter) Match(path, method string) (tw.HandlerFunc, bool) {
+func (t *ToyRouter) Match(path, method string) (tw.Action, bool) {
 	if path == "/" {
 		return t.router.handlers[method], true
 	}
 	path = strings.Trim(path, "/")
 	segments := strings.Split(path, "/")
-	return doFind(0, method, t.router, segments, nil)
+	return doMatch(0, method, t.router, segments, nil)
 }
 
-func doFind(p int, method string, cur *TreeNode, segments []string, wildcard *TreeNode) (tw.HandlerFunc, bool) {
+func doMatch(p int, method string, cur *TreeNode, segments []string, wildcard *TreeNode) (tw.Action, bool) {
 	if p == len(segments) {
 		handlerFunc, ok := cur.handlers[method]
 		return handlerFunc, ok
@@ -102,7 +102,7 @@ func doFind(p int, method string, cur *TreeNode, segments []string, wildcard *Tr
 	segment := segments[p]
 	for _, node := range cur.children {
 		if node.segment == segment && node.segment != "*" {
-			find, ok := doFind(p+1, method, node, segments, wildcard)
+			find, ok := doMatch(p+1, method, node, segments, wildcard)
 			if ok {
 				return find, ok
 			}

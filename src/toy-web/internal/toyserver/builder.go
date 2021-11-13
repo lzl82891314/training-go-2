@@ -1,4 +1,4 @@
-package builder
+package toyserver
 
 import (
 	"log"
@@ -8,7 +8,6 @@ import (
 	"toy-web/internal/toyrouter/factory"
 	_ "toy-web/internal/toyrouter/v1"
 	_ "toy-web/internal/toyrouter/v2"
-	"toy-web/internal/toyserver"
 )
 
 var (
@@ -43,10 +42,10 @@ func Build(name string) (tw.Server, error) {
 		}
 	}
 
-	server := &toyserver.ToyServer{
-		Name:       name,
-		Router:     router,
-		Middleware: root,
+	server := &ToyServer{
+		Name:   name,
+		Router: router,
+		mid:    root,
 	}
 	return server, nil
 }
