@@ -14,4 +14,7 @@ type IContext interface {
 	FormStr(key string, def string) string
 	FormArr(key string, def []string) []string
 	FormAll() map[string][]string
+
+	SetPathParam(key, value string) bool
+	GetPathParam(key string) (string, bool)
 }

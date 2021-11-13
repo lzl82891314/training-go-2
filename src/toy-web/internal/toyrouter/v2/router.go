@@ -15,19 +15,19 @@ import (
 
 func init() {
 	factory.Register("v2", &ToyRouter{
-		router: NewTree("/"),
+		node: NewNode("/"),
 	})
 }
 
 type ToyRouter struct {
-	router *TreeNode
+	node *TreeNode
 }
 
 var _ tw.IRouter = &ToyRouter{}
 
 func (t *ToyRouter) Map(pattern, method string, action tw.Action) error {
 	if pattern == "/" {
-		t.router.handlers[strings.ToUpper(method)] = action
+		t.node.handlers[strings.ToUpper(method)] = action
 		return nil
 	}
 	if err := pathValidator(pattern); err != nil {
@@ -39,7 +39,7 @@ func (t *ToyRouter) Map(pattern, method string, action tw.Action) error {
 		return errors.New("router path can not be null or empty")
 	}
 
-	p, cur := 0, t.router
+	p, cur := 0, t.node
 	for len(cur.children) > 0 {
 		if p == len(segments) {
 			// 说明已经找到，直接返回
@@ -82,18 +82,18 @@ func treeGenerator(node *TreeNode, p int, segments []string) *TreeNode {
 		return node
 	}
 	segment := segments[p]
-	cur := NewTree(segment)
+	cur := NewNode(segment)
 	node.children = append(node.children, cur)
 	return treeGenerator(cur, p+1, segments)
 }
 
 func (t *ToyRouter) Match(path, method string) (tw.Action, bool) {
 	if path == "/" {
-		return t.router.handlers[method], true
+		return t.node.handlers[method], true
 	}
 	path = strings.Trim(path, "/")
 	segments := strings.Split(path, "/")
-	return doMatch(0, method, t.router, segments, nil)
+	return doMatch(0, method, t.node, segments, nil)
 }
 
 func doMatch(p int, method string, cur *TreeNode, segments []string, wildcard *TreeNode) (tw.Action, bool) {

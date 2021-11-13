@@ -13,6 +13,7 @@ type Context struct {
 	req *http.Request
 	w   http.ResponseWriter
 	ctx context.Context
+	ppm map[string]string
 }
 
 var _ tw.IContext = &Context{}
@@ -22,6 +23,7 @@ func New(w http.ResponseWriter, req *http.Request) tw.IContext {
 		req: req,
 		w:   w,
 		ctx: req.Context(),
+		ppm: make(map[string]string, 1),
 	}
 }
 
@@ -135,6 +137,23 @@ func (ctx *Context) FormArr(key string, def []string) []string {
 		return vals
 	}
 	return def
+}
+
+// #endregion
+
+// #region path param
+
+func (ctx *Context) SetPathParam(key, value string) bool {
+	if _, ok := ctx.ppm[key]; ok {
+		return false
+	}
+	ctx.ppm[key] = value
+	return true
+}
+
+func (ctx *Context) GetPathParam(key string) (string, bool) {
+	val, ok := ctx.ppm[key]
+	return val, ok
 }
 
 // #endregion

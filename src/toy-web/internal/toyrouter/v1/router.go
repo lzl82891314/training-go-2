@@ -13,31 +13,31 @@ import (
 
 func init() {
 	factory.Register("v1", &ToyRouter{
-		router: make(map[string]tw.Action, 5),
+		node: make(map[string]tw.Action, 5),
 	})
 }
 
 var _ tw.IRouter = &ToyRouter{}
 
 type ToyRouter struct {
-	router map[string]tw.Action
+	node map[string]tw.Action
 }
 
 func (m *ToyRouter) Map(pattern, method string, handleFunc tw.Action) error {
 	pattern = strings.Trim(pattern, "/")
 	key := generateKey(pattern, method)
-	_, ok := m.router[key]
+	_, ok := m.node[key]
 	if ok {
 		return fmt.Errorf("duplicated route: %s", key)
 	}
-	m.router[key] = handleFunc
+	m.node[key] = handleFunc
 	return nil
 }
 
 func (m *ToyRouter) Match(path, method string) (tw.Action, bool) {
 	purePath := strings.Trim(path, "/")
 	key := generateKey(purePath, method)
-	load, ok := m.router[key]
+	load, ok := m.node[key]
 	if !ok {
 		return nil, ok
 	}

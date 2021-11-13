@@ -8,7 +8,7 @@ type TreeNode struct {
 	handlers map[string]tw.Action
 }
 
-func NewTree(segment string) *TreeNode {
+func NewNode(segment string) *TreeNode {
 	return &TreeNode{
 		segment:  segment,
 		children: make([]*TreeNode, 0, 3),
