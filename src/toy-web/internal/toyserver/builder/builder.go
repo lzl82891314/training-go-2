@@ -3,22 +3,16 @@ package builder
 import (
 	"os"
 	"strings"
-	"sync"
 	tw "toy-web"
+	"toy-web/internal/toyrouter/factory"
+	_ "toy-web/internal/toyrouter/v1"
+	_ "toy-web/internal/toyrouter/v2"
 	"toy-web/internal/toyserver"
 )
 
 var (
-	routerMap = make(map[string]tw.Router, 3)
-	mutex     = sync.RWMutex{}
-	mws       = make([]tw.Middleware, 0, 5)
+	mws = make([]tw.Middleware, 0, 5)
 )
-
-func Register(name string, router tw.Router) {
-	mutex.Lock()
-	defer mutex.Unlock()
-	routerMap[name] = router
-}
 
 func Use(middleware tw.Middleware) {
 	mws = append(mws, middleware)
@@ -34,6 +28,11 @@ func Build(name string) (tw.Server, error) {
 		}
 	}
 
+	router, err := factory.New(v)
+	if err != nil {
+		return nil, err
+	}
+
 	var root = func(ctx *tw.Context) {}
 	if length := len(mws); length != 0 {
 		for i := length - 1; i >= 0; i-- {
@@ -44,7 +43,7 @@ func Build(name string) (tw.Server, error) {
 
 	server := &toyserver.ToyServer{
 		Name:       name,
-		Router:     routerMap[v],
+		Router:     router,
 		Middleware: root,
 	}
 	return server, nil

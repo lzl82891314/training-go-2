@@ -3,9 +3,8 @@ package v1
 import (
 	"fmt"
 	"strings"
-	"sync"
 	tw "toy-web"
-	"toy-web/internal/toyserver/builder"
+	"toy-web/internal/toyrouter/factory"
 )
 
 // 第一种路由实现为强硬匹配，即：
@@ -13,32 +12,36 @@ import (
 // 不支持通配符，不支持静态资源，不支持正则匹配
 
 func init() {
-	builder.Register("v1", &ToyRouter{})
+	factory.Register("v1", &ToyRouter{
+		router: make(map[string]tw.HandlerFunc, 5),
+	})
 }
 
+var _ tw.Router = &ToyRouter{}
+
 type ToyRouter struct {
-	routeMap sync.Map // 使用线程安全的Map
+	router map[string]tw.HandlerFunc
 }
 
 func (m *ToyRouter) Map(pattern, method string, handleFunc tw.HandlerFunc) error {
 	pattern = strings.Trim(pattern, "/")
 	key := generateKey(pattern, method)
-	_, ok := m.routeMap.Load(key)
+	_, ok := m.router[key]
 	if ok {
 		return fmt.Errorf("duplicated route: %s", key)
 	}
-	m.routeMap.Store(key, handleFunc)
+	m.router[key] = handleFunc
 	return nil
 }
 
 func (m *ToyRouter) Find(path, method string) (tw.HandlerFunc, bool) {
 	purePath := strings.Trim(path, "/")
 	key := generateKey(purePath, method)
-	load, ok := m.routeMap.Load(key)
+	load, ok := m.router[key]
 	if !ok {
 		return nil, ok
 	}
-	return load.(tw.HandlerFunc), true
+	return load, true
 }
 
 func generateKey(pattern, method string) string {
