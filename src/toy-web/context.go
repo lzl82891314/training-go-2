@@ -1,16 +1,20 @@
 package toy_web
 
 import (
+	"context"
 	"encoding/json"
-	"io"
 	"net/http"
+	"strconv"
 	"time"
 )
 
 type Context struct {
-	Req       *http.Request
-	RspWriter http.ResponseWriter
+	req *http.Request
+	w   http.ResponseWriter
+	ctx context.Context
 }
+
+type HandlerFunc func(ctx *Context)
 
 type ResponseDto struct {
 	Code      int         `json:"code"`
@@ -19,55 +23,120 @@ type ResponseDto struct {
 	Timestamp int64       `json:"timestamp"`
 }
 
-func CreateContext(w http.ResponseWriter, req *http.Request) *Context {
+func New(w http.ResponseWriter, req *http.Request) *Context {
 	return &Context{
-		Req:       req,
-		RspWriter: w,
+		req: req,
+		w:   w,
+		ctx: req.Context(),
 	}
 }
 
-func (ctx *Context) Request(data interface{}) error {
-	body, err := io.ReadAll(ctx.Req.Body)
-	if err != nil {
-		return err
-	}
-	return json.Unmarshal(body, data)
-}
+// #region Response
 
-func (ctx *Context) Response(v interface{}, err error) {
-	resp := &ResponseDto{
+func (ctx *Context) Json(s int, v interface{}, m string) error {
+	res := &ResponseDto{
+		Code:      s,
+		Message:   m,
+		Data:      v,
 		Timestamp: time.Now().UnixMilli(),
 	}
-	if err == nil {
-		resp.Code = http.StatusOK
-		resp.Message = "ok"
-		resp.Data = v
-	} else {
-		resp.Code = http.StatusBadRequest
-		resp.Message = err.Error()
-		resp.Data = nil
-	}
-	ctx.doResponse(resp)
-}
 
-func (ctx *Context) NotFoundResponse(message string) {
-	resp := &ResponseDto{
-		Code:    http.StatusNotFound,
-		Message: message,
-	}
-	ctx.doResponse(resp)
-}
-
-func (ctx *Context) doResponse(resp *ResponseDto) {
-	data, err := json.Marshal(resp)
+	data, err := json.Marshal(res)
 	if err != nil {
-		http.Error(ctx.RspWriter, err.Error(), http.StatusInternalServerError)
-		return
+		ctx.w.WriteHeader(http.StatusInternalServerError)
+		return err
 	}
-	ctx.RspWriter.Header().Set("Content-Type", "application/json")
-	if _, err := ctx.RspWriter.Write(data); err != nil {
-		http.Error(ctx.RspWriter, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	ctx.RspWriter.WriteHeader(resp.Code)
+
+	ctx.w.Header().Set("Content-Type", "application/json")
+	ctx.w.WriteHeader(s)
+	_, err = ctx.w.Write(data)
+	return err
 }
+
+func (ctx *Context) NotFound(m string) error {
+	return ctx.Json(http.StatusNotFound, nil, m)
+}
+
+// #endregion
+
+// #region Param
+
+func (ctx *Context) QueryAll() map[string][]string {
+	if ctx.req != nil {
+		return ctx.req.URL.Query()
+	}
+	return map[string][]string{}
+}
+
+func (ctx *Context) QueryInt(key string, def int) int {
+	params := ctx.QueryAll()
+	if vals, ok := params[key]; ok {
+		l := len(vals)
+		if l > 0 {
+			if val, err := strconv.Atoi(vals[l-1]); err == nil {
+				return val
+			}
+		}
+	}
+	return def
+}
+
+func (ctx *Context) QueryStr(key string, def string) string {
+	params := ctx.QueryAll()
+	if vals, ok := params[key]; ok {
+		l := len(vals)
+		if l > 0 {
+			return vals[l-1]
+		}
+	}
+	return def
+}
+
+func (ctx *Context) QueryArr(key string, def []string) []string {
+	params := ctx.QueryAll()
+	if vals, ok := params[key]; ok {
+		return vals
+	}
+	return def
+}
+
+func (ctx *Context) FormAll() map[string][]string {
+	if ctx.req != nil {
+		return ctx.req.PostForm
+	}
+	return map[string][]string{}
+}
+
+func (ctx *Context) FormInt(key string, def int) int {
+	params := ctx.FormAll()
+	if vals, ok := params[key]; ok {
+		l := len(vals)
+		if l > 0 {
+			if val, err := strconv.Atoi(vals[l-1]); err == nil {
+				return val
+			}
+		}
+	}
+	return def
+}
+
+func (ctx *Context) FormStr(key string, def string) string {
+	params := ctx.FormAll()
+	if vals, ok := params[key]; ok {
+		l := len(vals)
+		if l > 0 {
+			return vals[l-1]
+		}
+	}
+	return def
+}
+
+func (ctx *Context) FormArr(key string, def []string) []string {
+	params := ctx.FormAll()
+	if vals, ok := params[key]; ok {
+		return vals
+	}
+	return def
+}
+
+// #endregion

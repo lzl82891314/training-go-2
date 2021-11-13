@@ -21,11 +21,13 @@ func (ts *ToyServer) Map(pattern, method string, handlerFunc tw.HandlerFunc) err
 }
 
 func (ts *ToyServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	ctx := tw.CreateContext(w, req)
+	ctx := tw.New(w, req)
 	ts.Middleware(ctx)
-	handler, ok := ts.Router.Find(ctx.Req.URL.Path, ctx.Req.Method)
+	handler, ok := ts.Router.Match(req.URL.Path, req.Method)
 	if !ok {
-		ctx.NotFoundResponse(fmt.Sprintf("route handler was not registed: %s", ctx.Req.URL.Path))
+		if err := ctx.NotFound(fmt.Sprintf("route handler was not registed: %s", req.URL.Path)); err != nil {
+			panic(err)
+		}
 		return
 	}
 	handler(ctx)
