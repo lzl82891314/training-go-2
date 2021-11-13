@@ -34,7 +34,7 @@ func (m *ToyRouter) Map(pattern, method string, handleFunc tw.HandlerFunc) error
 	return nil
 }
 
-func (m *ToyRouter) Find(path, method string) (tw.HandlerFunc, bool) {
+func (m *ToyRouter) Match(path, method string) (tw.HandlerFunc, bool) {
 	purePath := strings.Trim(path, "/")
 	key := generateKey(purePath, method)
 	load, ok := m.router[key]
