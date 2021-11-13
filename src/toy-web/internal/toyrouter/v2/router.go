@@ -23,6 +23,8 @@ type ToyRouter struct {
 	router *TreeNode
 }
 
+var _ tw.IRouter = &ToyRouter{}
+
 func (t *ToyRouter) Map(pattern, method string, action tw.Action) error {
 	if pattern == "/" {
 		t.router.handlers[strings.ToUpper(method)] = action

@@ -1,6 +1,6 @@
 package toy_web
 
-type Router interface {
+type IRouter interface {
 	Map(pattern, method string, action Action) error
 	Match(path, method string) (Action, bool)
 }

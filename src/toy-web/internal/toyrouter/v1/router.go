@@ -17,7 +17,7 @@ func init() {
 	})
 }
 
-var _ tw.Router = &ToyRouter{}
+var _ tw.IRouter = &ToyRouter{}
 
 type ToyRouter struct {
 	router map[string]tw.Action

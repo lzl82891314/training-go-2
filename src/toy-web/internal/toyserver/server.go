@@ -7,15 +7,16 @@ import (
 	"os"
 	"strings"
 	tw "toy-web"
+	tc "toy-web/internal/toycontext"
 	"toy-web/internal/toyrouter/factory"
 	_ "toy-web/internal/toyrouter/v1"
 	_ "toy-web/internal/toyrouter/v2"
 )
 
 type ToyServer struct {
-	Name string
-	mid  []tw.Middleware
-	tw.Router
+	Name   string
+	mid    []tw.Middleware
+	Router tw.IRouter
 }
 
 func New(name string) (*ToyServer, error) {
@@ -46,7 +47,7 @@ func (ts *ToyServer) Map(pattern, method string, action tw.Action) error {
 }
 
 func (ts *ToyServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	ctx := tw.New(w, req)
+	ctx := tc.New(w, req)
 	handler, ok := ts.Router.Match(req.URL.Path, req.Method)
 	if !ok {
 		if err := ctx.NotFound(fmt.Sprintf("route handler was not registed: %s", req.URL.Path)); err != nil {

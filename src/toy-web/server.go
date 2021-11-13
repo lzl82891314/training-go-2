@@ -1,7 +1,7 @@
 package toy_web
 
-type Server interface {
+type IServer interface {
 	Use(middleware Middleware)
-	Router
+	IRouter
 	Start(addr string) error
 }
