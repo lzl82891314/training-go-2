@@ -22,6 +22,12 @@ func main() {
 	server.Map("/", "GET", func(ctx *tw.Context) {
 		ctx.Response("hello, world", nil)
 	})
+	server.Map("hello/*", "GET", func(ctx *tw.Context) {
+		ctx.Response("hello, *", nil)
+	})
+	server.Map("hello/jeffery", "GET", func(ctx *tw.Context) {
+		ctx.Response("hello, jeffery", nil)
+	})
 	err = server.Start("localhost:8080")
 	if err != nil {
 		panic(err)

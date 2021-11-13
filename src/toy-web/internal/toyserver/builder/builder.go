@@ -1,6 +1,7 @@
 package builder
 
 import (
+	"log"
 	"os"
 	"strings"
 	tw "toy-web"
@@ -28,6 +29,7 @@ func Build(name string) (tw.Server, error) {
 		}
 	}
 
+	log.Printf("current router version is: %s", v)
 	router, err := factory.New(v)
 	if err != nil {
 		return nil, err
