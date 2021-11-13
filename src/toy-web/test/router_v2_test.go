@@ -13,7 +13,7 @@ func TestTreeGenerator(t *testing.T) {
 	router.Map(path, "GET", func(ctx *tw.Context) {
 		ctx.Response("hello, world", nil)
 	})
-	_, b := router.Find(path, "GET")
+	_, b := router.Match(path, "GET")
 	if !b {
 		t.Error(router)
 	}
