@@ -1,9 +1,17 @@
 package node
 
 import (
+	"log"
 	"strings"
 	tw "toy-web"
 )
+
+func init() {
+	err := Register(Root, newRootNode, isRootNode)
+	if err != nil {
+		log.Fatalln(err)
+	}
+}
 
 type RootNode struct {
 	segment  string
@@ -12,7 +20,7 @@ type RootNode struct {
 	value    int
 }
 
-func newRootNode() INode {
+func newRootNode(segment string) INode {
 	return &RootNode{
 		segment:  RootSymbol,
 		children: make([]INode, 0, 3),

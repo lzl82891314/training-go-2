@@ -1,9 +1,17 @@
 package node
 
 import (
+	"log"
 	"strings"
 	tw "toy-web"
 )
+
+func init() {
+	err := Register(Wildcard, newWildcardNode, isWildcardNode)
+	if err != nil {
+		log.Fatalln(err)
+	}
+}
 
 type WildcardNode struct {
 	segment  string
@@ -12,7 +20,7 @@ type WildcardNode struct {
 	value    int
 }
 
-func newWildcardNode() INode {
+func newWildcardNode(segment string) INode {
 	return &WildcardNode{
 		segment:  WildcardSymbol,
 		children: nil, // 通配符之后不需要子路径，因此不需要初始化

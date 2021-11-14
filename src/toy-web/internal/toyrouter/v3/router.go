@@ -21,7 +21,7 @@ var (
 )
 
 func init() {
-	root, _ := node.NewNode(node.Root, "")
+	root, _ := node.New(node.Root, node.RootSymbol)
 	factory.Register("v3", &ToyRouter{
 		node:     root,
 		priority: &node.ByValue{},
@@ -98,7 +98,7 @@ func (t *ToyRouter) doMap(i int, n node.INode, segments []string, method string,
 			n.SetAction(method, action)
 			return nil
 		}
-		get, ok := t.priority.Get(n.GetChildren())
+		get, ok := t.priority.GetMost(n.GetChildren())
 		if ok && get.Match(segments[i+1], nil) && get.GetChildren() != nil {
 			return t.doMap(i+1, get, segments, method, action)
 		}
@@ -108,7 +108,7 @@ func (t *ToyRouter) doMap(i int, n node.INode, segments []string, method string,
 	if n.GetChildren() == nil {
 		return fmt.Errorf("route node [%s] can not register child node", n.GetSegment())
 	}
-	ch, err := node.NewNodeBySegment(s)
+	ch, err := node.NewBySegment(s)
 	if err != nil {
 		return err
 	}
@@ -147,7 +147,7 @@ func (t *ToyRouter) doMatch(i int, n node.INode, segments []string, ctx tw.ICont
 		return t.doMatch(i+1, n, segments, ctx)
 	}
 	for len(candidates) > 0 {
-		ch, ok := t.priority.Get(candidates)
+		ch, ok := t.priority.GetMost(candidates)
 		if !ok {
 			return nil, false
 		}

@@ -7,6 +7,13 @@ import (
 	tw "toy-web"
 )
 
+func init() {
+	err := Register(Reg, newRegNode, isRegNode)
+	if err != nil {
+		log.Fatalln(err)
+	}
+}
+
 const (
 	RegPrefix = "["
 	RegSuffix = "]"

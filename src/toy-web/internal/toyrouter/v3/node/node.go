@@ -2,6 +2,7 @@ package node
 
 import (
 	"fmt"
+	"sync"
 	tw "toy-web"
 )
 
@@ -28,6 +29,14 @@ const (
 	ParamSymbol    = ":"
 )
 
+var (
+	nodeValues     = make([]int, 5, 5)
+	nodeGenerators = make(map[int]NewNodeFunc, 5)
+	nodeMatchers   = make(map[int]MatchNodeFunc, 5)
+	priority       = &ByValue{}
+	mutex          sync.Mutex
+)
+
 type INode interface {
 	GetSegment() string
 	GetValue() int
@@ -42,33 +51,45 @@ type INode interface {
 	Match(segment string, ctx tw.IContext) bool
 }
 
-func NewNode(value int, segment string) (INode, error) {
-	switch value {
-	case Static:
-		return newStaticNode(segment), nil
-	case Reg:
-		return newRegNode(segment), nil
-	case Param:
-		return newParamNode(segment), nil
-	case Wildcard:
-		return newWildcardNode(), nil
-	case Root:
-		return newRootNode(), nil
+type NewNodeFunc func(segment string) INode
+type MatchNodeFunc func(segment string) bool
+
+func Register(value int, nodeFunc NewNodeFunc, matchFunc MatchNodeFunc) error {
+	mutex.Lock()
+	defer mutex.Unlock()
+	if _, ok := nodeGenerators[value]; ok {
+		return fmt.Errorf("this value [%d] of node has been registered, please change the node value", value)
 	}
-	return nil, fmt.Errorf("node value %d not implemented", value)
+	nodeValues = append(nodeValues, value)
+	nodeGenerators[value] = nodeFunc
+	nodeMatchers[value] = matchFunc
+	return nil
 }
 
-func NewNodeBySegment(segment string) (INode, error) {
-	if isStaticNode(segment) {
-		return NewNode(Static, segment)
-	} else if isRegNode(segment) {
-		return NewNode(Reg, segment)
-	} else if isParamNode(segment) {
-		return NewNode(Param, segment)
-	} else if isWildcardNode(segment) {
-		return NewNode(Wildcard, segment)
-	} else if isRootNode(segment) {
-		return NewNode(Root, segment)
+func New(value int, segment string) (INode, error) {
+	nodeFunc, ok := nodeGenerators[value]
+	if !ok {
+		return nil, fmt.Errorf("node value %d not implemented", value)
+	}
+	return nodeFunc(segment), nil
+}
+
+func NewBySegment(segment string) (INode, error) {
+	candidates := make([]int, len(nodeValues))
+	copy(candidates, nodeValues)
+	for len(candidates) > 0 {
+		n, ok := priority.GetMostByValue(candidates)
+		if !ok {
+			return nil, fmt.Errorf("segment [%s] has no matched route strategy", segment)
+		}
+		matcher, ok := nodeMatchers[n]
+		if !ok {
+			return nil, fmt.Errorf("segment [%s] has no matched route strategy", segment)
+		}
+		if matcher(segment) {
+			return nodeGenerators[n](segment), nil
+		}
+		priority.RemoveMostByValue(&candidates)
 	}
 	return nil, fmt.Errorf("segment [%s] has none matched node type", segment)
 }

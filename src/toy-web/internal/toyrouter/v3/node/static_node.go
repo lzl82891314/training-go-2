@@ -1,9 +1,17 @@
 package node
 
 import (
+	"log"
 	"strings"
 	tw "toy-web"
 )
+
+func init() {
+	err := Register(Static, newStaticNode, isStaticNode)
+	if err != nil {
+		log.Fatalln(err)
+	}
+}
 
 type StaticNode struct {
 	segment  string
