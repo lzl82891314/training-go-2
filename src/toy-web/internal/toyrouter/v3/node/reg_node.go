@@ -22,7 +22,7 @@ type RegNode struct {
 func newRegNode(pattern string) INode {
 	return &RegNode{
 		segment:  pattern,
-		children: make([]INode, 0, 3),
+		children: nil, // 正则表达式也不应该有子节点
 		handlers: make(map[string]tw.Action, 2),
 		value:    Reg,
 	}

@@ -26,7 +26,7 @@ func isStaticNode(segment string) bool {
 	if segment == "" {
 		return false
 	}
-	return segment != RootSymbol && segment != WildcardSymbol && strings.HasPrefix(segment, ParamSymbol)
+	return segment != RootSymbol && segment != WildcardSymbol && !strings.HasPrefix(segment, ParamSymbol)
 }
 
 func (n *StaticNode) GetSegment() string {

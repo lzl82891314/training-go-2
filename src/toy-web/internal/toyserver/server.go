@@ -71,7 +71,7 @@ func (ts *ToyServer) bindMiddleware(handler tw.Action) tw.Action {
 }
 
 func loadRouter() string {
-	v := "v1"
+	v := "v3"
 	args := os.Args
 	for _, val := range args {
 		if strings.HasPrefix(val, "-router=") {

@@ -5,6 +5,8 @@ import (
 	"time"
 	tw "toy-web"
 	_ "toy-web/internal/toyrouter/v1"
+	_ "toy-web/internal/toyrouter/v2"
+	_ "toy-web/internal/toyrouter/v3"
 	"toy-web/internal/toyserver"
 )
 

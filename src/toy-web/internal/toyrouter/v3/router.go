@@ -2,6 +2,7 @@ package v3
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 	tw "toy-web"
 	"toy-web/internal/toyrouter/factory"
@@ -20,9 +21,9 @@ var (
 )
 
 func init() {
-	n, _ := node.NewNode(node.Root, "/")
+	root, _ := node.NewNode(node.Root, "")
 	factory.Register("v3", &ToyRouter{
-		node:     n,
+		node:     root,
 		priority: &node.ByValue{},
 	})
 }
@@ -39,24 +40,8 @@ func (t *ToyRouter) Map(pattern, method string, action tw.Action) error {
 		return err
 	}
 
-	if pattern == node.RootSymbol {
-		t.node.SetAction(strings.ToUpper(method), action)
-		return nil
-	}
-	segments, err := splitPattern(pattern)
-	if err != nil {
-		return err
-	}
-	n, i := findLast(1, t.node.GetChildren(), segments)
-	if n == nil {
-		n, i = t.node, 1
-	}
-	n, err = generateNode(i, n, segments)
-	if err != nil {
-		return err
-	}
-	n.SetAction(method, action)
-	return nil
+	segments := splitPattern(pattern)
+	return t.doMap(0, t.node, segments, method, action)
 }
 
 func validateRoute(pattern, method string) error {
@@ -84,40 +69,52 @@ func validateRoute(pattern, method string) error {
 	return nil
 }
 
-func splitPattern(pattern string) ([]string, error) {
+func splitPattern(pattern string) []string {
 	do := strings.Trim(pattern, node.RootSymbol)
-	return strings.Split(do, node.RootSymbol), nil
-}
-
-func findLast(i int, nodes []node.INode, segments []string) (node.INode, int) {
-	if i >= len(segments) {
-		return nil, i
-	}
-	s := segments[i]
-	var ans node.INode = nil
-	var index = i
-	for _, n := range nodes {
-		if n.GetSegment() == s {
-			tmp, tmpI := findLast(i+1, n.GetChildren(), segments)
-			if tmp != nil {
-				ans, index = tmp, tmpI
-			}
+	split := strings.Split(do, node.RootSymbol)
+	ans := make([]string, 1, len(split)+1)
+	ans[0] = node.RootSymbol
+	for _, s := range split {
+		if s == "" {
+			continue
 		}
+		ans = append(ans, s)
 	}
-	return ans, index
+	return ans
 }
 
-func generateNode(i int, n node.INode, segments []string) (node.INode, error) {
-	if i >= len(segments) {
-		return n, nil
+func (t *ToyRouter) doMap(i int, n node.INode, segments []string, method string, action tw.Action) error {
+	if n == nil {
+		return errors.New("root route didn't register")
 	}
+	if i == len(segments) {
+		n.SetAction(method, action)
+		return nil
+	}
+
 	s := segments[i]
+	if n.Match(s, nil) {
+		if i == len(segments)-1 {
+			n.SetAction(method, action)
+			return nil
+		}
+		get, ok := t.priority.Get(n.GetChildren())
+		if ok && get.Match(segments[i+1], nil) && get.GetChildren() != nil {
+			return t.doMap(i+1, get, segments, method, action)
+		}
+		return t.doMap(i+1, n, segments, method, action)
+	}
+
+	if n.GetChildren() == nil {
+		return fmt.Errorf("route node [%s] can not register child node", n.GetSegment())
+	}
 	ch, err := node.NewNodeBySegment(s)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	n.SetChild(ch)
-	return generateNode(i+1, ch, segments)
+	n = ch
+	return t.doMap(i+1, n, segments, method, action)
 }
 
 func (t *ToyRouter) Match(path, method string, ctx tw.IContext) (tw.Action, bool) {
@@ -125,31 +122,40 @@ func (t *ToyRouter) Match(path, method string, ctx tw.IContext) (tw.Action, bool
 		return nil, false
 	}
 
-	if path == node.RootSymbol {
-		return t.node.GetAction(method)
-	}
-	segments, err := splitPattern(path)
-	if err != nil {
-		return nil, false
-	}
-	return t.doMatch(0, method, t.node, segments, ctx)
-}
-
-func (t *ToyRouter) doMatch(i int, method string, n node.INode, segments []string, ctx tw.IContext) (tw.Action, bool) {
-	if i >= len(segments) {
-		return n.GetAction(method)
-	}
-	s := segments[i]
-	candidates := make([]node.INode, 0, 5)
-	for _, ch := range n.GetChildren() {
-		if ch.Match(s, ctx) {
-			candidates = append(candidates, ch)
-		}
-	}
-
-	get, ok := t.priority.Get(candidates)
+	segments := splitPattern(path)
+	n, ok := t.doMatch(0, t.node, segments, ctx)
 	if !ok {
 		return nil, false
 	}
-	return t.doMatch(i+1, method, get, segments, ctx)
+	return n.GetAction(method)
+}
+
+func (t *ToyRouter) doMatch(i int, n node.INode, segments []string, ctx tw.IContext) (node.INode, bool) {
+	if n == nil {
+		return nil, false
+	}
+	s := segments[i]
+	if ok := n.Match(s, ctx); !ok {
+		return nil, false
+	}
+	if i == len(segments)-1 {
+		return n, true
+	}
+
+	candidates := n.GetChildren()
+	if candidates == nil {
+		return t.doMatch(i+1, n, segments, ctx)
+	}
+	for len(candidates) > 0 {
+		ch, ok := t.priority.Get(candidates)
+		if !ok {
+			return nil, false
+		}
+		ans, ok := t.doMatch(i+1, ch, segments, ctx)
+		if ok {
+			return ans, ok
+		}
+		t.priority.RemoveMost(&candidates)
+	}
+	return nil, false
 }
