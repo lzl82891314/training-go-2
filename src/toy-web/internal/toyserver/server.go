@@ -9,8 +9,6 @@ import (
 	tw "toy-web"
 	tc "toy-web/internal/toycontext"
 	"toy-web/internal/toyrouter/factory"
-	_ "toy-web/internal/toyrouter/v1"
-	_ "toy-web/internal/toyrouter/v2"
 )
 
 type ToyServer struct {
