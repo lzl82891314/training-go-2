@@ -8,19 +8,19 @@ import (
 
 const (
 	// Root 根节点
-	Root = iota
+	Root = 0
 
 	// Wildcard 通配符 *
-	Wildcard
+	Wildcard = 10
 
 	// Param 路径参数 :
-	Param
+	Param = 20
 
 	// Reg 正则表达式
-	Reg
+	Reg = 30
 
 	// Static 静态路由
-	Static
+	Static = 40
 )
 
 const (
