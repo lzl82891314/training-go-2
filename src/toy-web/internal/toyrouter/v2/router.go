@@ -87,7 +87,7 @@ func treeGenerator(node *TreeNode, p int, segments []string) *TreeNode {
 	return treeGenerator(cur, p+1, segments)
 }
 
-func (t *ToyRouter) Match(path, method string) (tw.Action, bool) {
+func (t *ToyRouter) Match(path, method string, ctx tw.IContext) (tw.Action, bool) {
 	if path == "/" {
 		return t.node.handlers[method], true
 	}

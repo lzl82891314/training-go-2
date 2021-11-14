@@ -59,12 +59,13 @@ func (n *RegNode) SetChild(child INode) {
 	n.children = append(n.children, child)
 }
 
-func (n *RegNode) GetAction(method string) tw.Action {
-	return n.handlers[method]
+func (n *RegNode) GetAction(method string) (tw.Action, bool) {
+	action, ok := n.handlers[strings.ToUpper(method)]
+	return action, ok
 }
 
 func (n *RegNode) SetAction(method string, action tw.Action) {
-	n.handlers[method] = action
+	n.handlers[strings.ToUpper(method)] = action
 }
 
 func (n *RegNode) MatchSegment(segment string) bool {

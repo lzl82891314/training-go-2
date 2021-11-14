@@ -50,12 +50,13 @@ func (n *ParamNode) SetChild(child INode) {
 	n.children = append(n.children, child)
 }
 
-func (n *ParamNode) GetAction(method string) tw.Action {
-	return n.handlers[method]
+func (n *ParamNode) GetAction(method string) (tw.Action, bool) {
+	action, ok := n.handlers[strings.ToUpper(method)]
+	return action, ok
 }
 
 func (n *ParamNode) SetAction(method string, action tw.Action) {
-	n.handlers[method] = action
+	n.handlers[strings.ToUpper(method)] = action
 }
 
 func (n *ParamNode) MatchSegment(segment string) bool {

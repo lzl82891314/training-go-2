@@ -50,12 +50,13 @@ func (n *StaticNode) SetChild(child INode) {
 	n.children = append(n.children, child)
 }
 
-func (n *StaticNode) GetAction(method string) tw.Action {
-	return n.handlers[method]
+func (n *StaticNode) GetAction(method string) (tw.Action, bool) {
+	action, ok := n.handlers[strings.ToUpper(method)]
+	return action, ok
 }
 
 func (n *StaticNode) SetAction(method string, action tw.Action) {
-	n.handlers[method] = action
+	n.handlers[strings.ToUpper(method)] = action
 }
 
 func (n *StaticNode) MatchSegment(segment string) bool {

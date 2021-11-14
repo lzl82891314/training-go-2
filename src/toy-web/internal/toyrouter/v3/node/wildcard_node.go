@@ -1,6 +1,7 @@
 package node
 
 import (
+	"strings"
 	tw "toy-web"
 )
 
@@ -45,12 +46,13 @@ func (n *WildcardNode) SetChild(child INode) {
 	n.children = append(n.children, child)
 }
 
-func (n *WildcardNode) GetAction(method string) tw.Action {
-	return n.handlers[method]
+func (n *WildcardNode) GetAction(method string) (tw.Action, bool) {
+	action, ok := n.handlers[strings.ToUpper(method)]
+	return action, ok
 }
 
 func (n *WildcardNode) SetAction(method string, action tw.Action) {
-	n.handlers[method] = action
+	n.handlers[strings.ToUpper(method)] = action
 }
 
 func (n *WildcardNode) MatchSegment(segment string) bool {

@@ -2,7 +2,6 @@ package node
 
 import (
 	"fmt"
-	"sort"
 	tw "toy-web"
 )
 
@@ -36,7 +35,7 @@ type INode interface {
 	GetChildren() []INode
 	SetChild(child INode)
 
-	GetAction(method string) tw.Action
+	GetAction(method string) (tw.Action, bool)
 	SetAction(method string, action tw.Action)
 
 	MatchSegment(segment string) bool
@@ -72,10 +71,4 @@ func NewNodeBySegment(segment string) (INode, error) {
 		return NewNode(Root, segment)
 	}
 	return nil, fmt.Errorf("segment [%s] has none matched node type", segment)
-}
-
-func Sort(candidates []INode) {
-	sort.Slice(candidates, func(i, j int) bool {
-		return candidates[i].GetValue() < candidates[j].GetValue()
-	})
 }

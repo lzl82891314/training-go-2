@@ -14,25 +14,35 @@ import (
 // 因此可以看到v2的版本是没有任何扩展性的，只要后续有新的匹配规则要加入 比如正则匹配 都需要修改原始代码
 // 因此v3就是对v2进行进一步的抽象，增加代码扩展性
 
+var (
+	PatternInvalidErr = errors.New("route pattern is invalid")
+	MethodInvalidErr  = errors.New("route method is invalid")
+)
+
 func init() {
 	n, _ := node.NewNode(node.Root, "/")
 	factory.Register("v3", &ToyRouter{
-		node: n,
+		node:     n,
+		priority: &node.ByValue{},
 	})
 }
 
 type ToyRouter struct {
-	node node.INode
+	node     node.INode
+	priority node.INodePriority
 }
 
 var _ tw.IRouter = &ToyRouter{}
 
 func (t *ToyRouter) Map(pattern, method string, action tw.Action) error {
-	if pattern == "/" {
+	if err := validateRoute(pattern, method); err != nil {
+		return err
+	}
+
+	if pattern == node.RootSymbol {
 		t.node.SetAction(strings.ToUpper(method), action)
 		return nil
 	}
-
 	segments, err := splitPattern(pattern)
 	if err != nil {
 		return err
@@ -49,19 +59,34 @@ func (t *ToyRouter) Map(pattern, method string, action tw.Action) error {
 	return nil
 }
 
-func splitPattern(pattern string) ([]string, error) {
+func validateRoute(pattern, method string) error {
+	if pattern == "" {
+		return PatternInvalidErr
+	}
 	pos := strings.Index(pattern, node.WildcardSymbol)
 	if pos > 0 {
 		// 通配符必须是最后一个
 		if pos != len(pattern)-1 {
-			return nil, errors.New("invalid route pattern")
+			return PatternInvalidErr
 		}
 		if pattern[pos-1] != '/' {
-			return nil, errors.New("invalid route pattern")
+			return PatternInvalidErr
 		}
 	}
-	do := strings.Trim(pattern, "/")
-	return strings.Split(do, "/"), nil
+	if method == "" {
+		return MethodInvalidErr
+	}
+
+	m := strings.ToUpper(method)
+	if m != "GET" && m != "POST" && m != "PUT" && m != "DELETE" {
+		return MethodInvalidErr
+	}
+	return nil
+}
+
+func splitPattern(pattern string) ([]string, error) {
+	do := strings.Trim(pattern, node.RootSymbol)
+	return strings.Split(do, node.RootSymbol), nil
 }
 
 func findLast(i int, nodes []node.INode, segments []string) (node.INode, int) {
@@ -95,6 +120,36 @@ func generateNode(i int, n node.INode, segments []string) (node.INode, error) {
 	return generateNode(i+1, ch, segments)
 }
 
-func (t *ToyRouter) Match(path, method string) (tw.Action, bool) {
-	panic("implement me")
+func (t *ToyRouter) Match(path, method string, ctx tw.IContext) (tw.Action, bool) {
+	if err := validateRoute(path, method); err != nil {
+		return nil, false
+	}
+
+	if path == node.RootSymbol {
+		return t.node.GetAction(method)
+	}
+	segments, err := splitPattern(path)
+	if err != nil {
+		return nil, false
+	}
+	return t.doMatch(0, method, t.node, segments, ctx)
+}
+
+func (t *ToyRouter) doMatch(i int, method string, n node.INode, segments []string, ctx tw.IContext) (tw.Action, bool) {
+	if i >= len(segments) {
+		return n.GetAction(method)
+	}
+	s := segments[i]
+	candidates := make([]node.INode, 0, 5)
+	for _, ch := range n.GetChildren() {
+		if ch.Match(s, ctx) {
+			candidates = append(candidates, ch)
+		}
+	}
+
+	get, ok := t.priority.Get(candidates)
+	if !ok {
+		return nil, false
+	}
+	return t.doMatch(i+1, method, get, segments, ctx)
 }

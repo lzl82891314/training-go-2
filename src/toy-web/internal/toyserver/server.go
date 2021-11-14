@@ -48,7 +48,7 @@ func (ts *ToyServer) Map(pattern, method string, action tw.Action) error {
 
 func (ts *ToyServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	ctx := tc.New(w, req)
-	handler, ok := ts.Router.Match(req.URL.Path, req.Method)
+	handler, ok := ts.Router.Match(req.URL.Path, req.Method, ctx)
 	if !ok {
 		if err := ctx.NotFound(fmt.Sprintf("route handler was not registed: %s", req.URL.Path)); err != nil {
 			panic(err)
