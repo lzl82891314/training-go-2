@@ -3,9 +3,6 @@ package implement
 type FibV3 struct{}
 
 func (fib *FibV3) CalculateFibN(n int) int {
-	if n <= 0 {
-		return 0
-	}
 	if n <= 2 {
 		return 1
 	}

@@ -1,22 +1,20 @@
 package implement
 
-type FibV2 struct{}
-
-func (fib *FibV2) CalculateFibN(n int) int {
-	if n <= 0 {
-		return 0
-	}
-	return fib.doCalFibN(n, make(map[int]int, n-2))
+type FibV2 struct {
+	cache map[int]int
 }
 
-func (fib *FibV2) doCalFibN(n int, cache map[int]int) int {
+func (fib *FibV2) CalculateFibN(n int) int {
 	if n <= 2 {
 		return 1
 	}
-	v, ok := cache[n]
-	if ok {
+	if fib.cache == nil {
+		fib.cache = make(map[int]int, n)
+		fib.cache[0], fib.cache[1] = 1, 1
+	}
+	if v, ok := fib.cache[n]; ok {
 		return v
 	}
-	cache[n] = fib.doCalFibN(n-1, cache) + fib.doCalFibN(n-2, cache)
-	return cache[n]
+	fib.cache[n] = fib.CalculateFibN(n-1) + fib.CalculateFibN(n-2)
+	return fib.cache[n]
 }
