@@ -11,20 +11,22 @@ const (
 	ProducerCount = 3
 	ConsumerCount = 5
 	FullCount     = 15
+	TimeFactor    = 5
 )
 
-var waitGroup = sync.WaitGroup{}
+var (
+	waitGroup = sync.WaitGroup{}
+)
 
 // 创建 3 个生产者，5个消费者模型
 // 每个消费者需要消耗满 100个产品才能满足
 
 func producer(n int, ch chan<- int) {
 	defer waitGroup.Done()
-	rand.Seed(time.Now().UnixNano())
-	times := rand.Intn(10)
+	times := createFactor()
 	asleepTimes := 0
 	for true {
-		p := rand.Intn(10)
+		p := createFactor()
 		select {
 		case ch <- p:
 			{
@@ -36,8 +38,9 @@ func producer(n int, ch chan<- int) {
 			{
 				time.Sleep(time.Second * 3)
 				asleepTimes++
+				fmt.Println("I need consumers!")
 				if asleepTimes == 3 {
-					fmt.Printf("Producer %d need to go home\n", n)
+					fmt.Printf("Producer %d will go home\n", n)
 					return
 				}
 			}
@@ -48,28 +51,35 @@ func producer(n int, ch chan<- int) {
 func consumer(n int, ch chan int) {
 	waitGroup.Done()
 	s := make([]int, 0, FullCount)
-	rand.Seed(time.Now().UnixNano())
-	times := rand.Intn(10)
+	times := createFactor()
 	for len(s) < FullCount {
 		select {
 		case c := <-ch:
 			{
 				s = append(s, c)
-				t := time.Duration(times) * time.Second
 				fmt.Printf("Consumer: %d consume a %d, remains %d, then will sleep %d s\n", n, c, FullCount-len(s), times)
-				time.Sleep(t)
+				time.Sleep(time.Duration(times) * time.Second)
 			}
 		default:
 			{
-				fmt.Println("producer need heer up")
+				fmt.Println("Producers need to hurry up, I'm hungry!")
 				time.Sleep(time.Second * 3)
 			}
 		}
 	}
-	fmt.Printf("Consumer: %d has full\n", n)
+	fmt.Printf("Consumer: %d already full\n", n)
+}
+
+func createFactor() int {
+	times := 0
+	for times == 0 {
+		times = rand.Intn(TimeFactor)
+	}
+	return times
 }
 
 func pc() {
+	rand.Seed(time.Now().UnixNano())
 	ch := make(chan int, FullCount)
 
 	waitGroup.Add(ProducerCount)
