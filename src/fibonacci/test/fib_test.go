@@ -3,7 +3,7 @@ package test
 import "fibonacci/internal/implement"
 import "testing"
 
-var n = 50
+var n = 40
 
 func BenchmarkFibV1_CalculateFibN(b *testing.B) {
 	for i := 0; i < b.N; i++ {
