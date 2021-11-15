@@ -13,7 +13,7 @@ func init() {
 	}
 }
 
-type StaticNode struct {
+type staticNode struct {
 	segment  string
 	children []INode
 	handlers map[string]tw.Action
@@ -21,7 +21,7 @@ type StaticNode struct {
 }
 
 func newStaticNode(segment string) INode {
-	return &StaticNode{
+	return &staticNode{
 		segment:  segment,
 		children: make([]INode, 0, 3),
 		handlers: make(map[string]tw.Action, 2),
@@ -37,19 +37,19 @@ func isStaticNode(segment string) bool {
 	return segment != RootSymbol && segment != WildcardSymbol && !strings.HasPrefix(segment, ParamSymbol)
 }
 
-func (n *StaticNode) GetSegment() string {
+func (n *staticNode) GetSegment() string {
 	return n.segment
 }
 
-func (n *StaticNode) GetValue() int {
+func (n *staticNode) GetValue() int {
 	return n.value
 }
 
-func (n *StaticNode) GetChildren() []INode {
+func (n *staticNode) GetChildren() []INode {
 	return n.children
 }
 
-func (n *StaticNode) SetChild(child INode) {
+func (n *staticNode) SetChild(child INode) {
 	for _, v := range n.children {
 		if v.GetSegment() == child.GetSegment() {
 			return
@@ -58,19 +58,19 @@ func (n *StaticNode) SetChild(child INode) {
 	n.children = append(n.children, child)
 }
 
-func (n *StaticNode) GetAction(method string) (tw.Action, bool) {
+func (n *staticNode) GetAction(method string) (tw.Action, bool) {
 	action, ok := n.handlers[strings.ToUpper(method)]
 	return action, ok
 }
 
-func (n *StaticNode) SetAction(method string, action tw.Action) {
+func (n *staticNode) SetAction(method string, action tw.Action) {
 	n.handlers[strings.ToUpper(method)] = action
 }
 
-func (n *StaticNode) MatchSegment(segment string) bool {
+func (n *staticNode) MatchSegment(segment string) bool {
 	return isStaticNode(segment)
 }
 
-func (n *StaticNode) Match(segment string, ctx tw.IContext) bool {
+func (n *staticNode) Match(segment string, ctx tw.IContext) bool {
 	return n.segment == segment && segment != WildcardSymbol
 }

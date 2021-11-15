@@ -19,7 +19,7 @@ const (
 	RegSuffix = "]"
 )
 
-type RegNode struct {
+type regNode struct {
 	segment  string
 	children []INode
 	handlers map[string]tw.Action
@@ -27,7 +27,7 @@ type RegNode struct {
 }
 
 func newRegNode(pattern string) INode {
-	return &RegNode{
+	return &regNode{
 		segment:  pattern,
 		children: nil, // 正则表达式也不应该有子节点
 		handlers: make(map[string]tw.Action, 2),
@@ -45,19 +45,19 @@ func isRegNode(segment string) bool {
 	return compile != nil && err == nil
 }
 
-func (n *RegNode) GetSegment() string {
+func (n *regNode) GetSegment() string {
 	return n.segment
 }
 
-func (n *RegNode) GetValue() int {
+func (n *regNode) GetValue() int {
 	return n.value
 }
 
-func (n *RegNode) GetChildren() []INode {
+func (n *regNode) GetChildren() []INode {
 	return n.children
 }
 
-func (n *RegNode) SetChild(child INode) {
+func (n *regNode) SetChild(child INode) {
 	for _, v := range n.children {
 		if v.GetSegment() == child.GetSegment() {
 			return
@@ -66,20 +66,20 @@ func (n *RegNode) SetChild(child INode) {
 	n.children = append(n.children, child)
 }
 
-func (n *RegNode) GetAction(method string) (tw.Action, bool) {
+func (n *regNode) GetAction(method string) (tw.Action, bool) {
 	action, ok := n.handlers[strings.ToUpper(method)]
 	return action, ok
 }
 
-func (n *RegNode) SetAction(method string, action tw.Action) {
+func (n *regNode) SetAction(method string, action tw.Action) {
 	n.handlers[strings.ToUpper(method)] = action
 }
 
-func (n *RegNode) MatchSegment(segment string) bool {
+func (n *regNode) MatchSegment(segment string) bool {
 	return isRegNode(segment)
 }
 
-func (n *RegNode) Match(segment string, ctx tw.IContext) bool {
+func (n *regNode) Match(segment string, ctx tw.IContext) bool {
 	matched, err := regexp.MatchString(n.segment, segment)
 	if err != nil {
 		log.Printf("router segment [%s] matching reg [%s] error [%s]", segment, n.segment, err.Error())

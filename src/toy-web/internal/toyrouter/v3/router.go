@@ -22,20 +22,20 @@ var (
 
 func init() {
 	root, _ := node.New(node.Root, node.RootSymbol)
-	factory.Register("v3", &ToyRouter{
+	factory.Register("v3", &toyRouter{
 		node:     root,
 		priority: &node.ByValue{},
 	})
 }
 
-type ToyRouter struct {
+type toyRouter struct {
 	node     node.INode
 	priority node.INodePriority
 }
 
-var _ tw.IRouter = &ToyRouter{}
+var _ tw.IRouter = &toyRouter{}
 
-func (t *ToyRouter) Map(pattern, method string, action tw.Action) error {
+func (t *toyRouter) Map(pattern, method string, action tw.Action) error {
 	if err := validateRoute(pattern, method); err != nil {
 		return err
 	}
@@ -83,7 +83,7 @@ func splitPattern(pattern string) []string {
 	return ans
 }
 
-func (t *ToyRouter) doMap(i int, n node.INode, segments []string, method string, action tw.Action) error {
+func (t *toyRouter) doMap(i int, n node.INode, segments []string, method string, action tw.Action) error {
 	if n == nil {
 		return errors.New("root route didn't register")
 	}
@@ -117,7 +117,7 @@ func (t *ToyRouter) doMap(i int, n node.INode, segments []string, method string,
 	return t.doMap(i+1, n, segments, method, action)
 }
 
-func (t *ToyRouter) Match(path, method string, ctx tw.IContext) (tw.Action, bool) {
+func (t *toyRouter) Match(path, method string, ctx tw.IContext) (tw.Action, bool) {
 	if err := validateRoute(path, method); err != nil {
 		return nil, false
 	}
@@ -130,7 +130,7 @@ func (t *ToyRouter) Match(path, method string, ctx tw.IContext) (tw.Action, bool
 	return n.GetAction(method)
 }
 
-func (t *ToyRouter) doMatch(i int, n node.INode, segments []string, ctx tw.IContext) (node.INode, bool) {
+func (t *toyRouter) doMatch(i int, n node.INode, segments []string, ctx tw.IContext) (node.INode, bool) {
 	if n == nil {
 		return nil, false
 	}

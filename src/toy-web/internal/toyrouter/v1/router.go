@@ -12,18 +12,18 @@ import (
 // 不支持通配符，不支持静态资源，不支持正则匹配
 
 func init() {
-	factory.Register("v1", &ToyRouter{
+	factory.Register("v1", &toyRouter{
 		node: make(map[string]tw.Action, 5),
 	})
 }
 
-var _ tw.IRouter = &ToyRouter{}
+var _ tw.IRouter = &toyRouter{}
 
-type ToyRouter struct {
+type toyRouter struct {
 	node map[string]tw.Action
 }
 
-func (m *ToyRouter) Map(pattern, method string, handleFunc tw.Action) error {
+func (m *toyRouter) Map(pattern, method string, handleFunc tw.Action) error {
 	pattern = strings.Trim(pattern, "/")
 	key := generateKey(pattern, method)
 	_, ok := m.node[key]
@@ -34,7 +34,7 @@ func (m *ToyRouter) Map(pattern, method string, handleFunc tw.Action) error {
 	return nil
 }
 
-func (m *ToyRouter) Match(path, method string, ctx tw.IContext) (tw.Action, bool) {
+func (m *toyRouter) Match(path, method string, ctx tw.IContext) (tw.Action, bool) {
 	purePath := strings.Trim(path, "/")
 	key := generateKey(purePath, method)
 	load, ok := m.node[key]

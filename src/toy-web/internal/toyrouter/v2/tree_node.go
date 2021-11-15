@@ -2,16 +2,16 @@ package v2
 
 import tw "toy-web"
 
-type TreeNode struct {
+type treeNode struct {
 	segment  string
-	children []*TreeNode
+	children []*treeNode
 	handlers map[string]tw.Action
 }
 
-func NewNode(segment string) *TreeNode {
-	return &TreeNode{
+func NewNode(segment string) *treeNode {
+	return &treeNode{
 		segment:  segment,
-		children: make([]*TreeNode, 0, 3),
+		children: make([]*treeNode, 0, 3),
 		handlers: make(map[string]tw.Action, 2),
 	}
 }

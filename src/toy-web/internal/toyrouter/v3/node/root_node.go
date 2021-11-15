@@ -13,7 +13,7 @@ func init() {
 	}
 }
 
-type RootNode struct {
+type rootNode struct {
 	segment  string
 	children []INode
 	handlers map[string]tw.Action
@@ -21,7 +21,7 @@ type RootNode struct {
 }
 
 func newRootNode(segment string) INode {
-	return &RootNode{
+	return &rootNode{
 		segment:  RootSymbol,
 		children: make([]INode, 0, 3),
 		handlers: make(map[string]tw.Action, 2),
@@ -37,19 +37,19 @@ func isRootNode(segment string) bool {
 	return segment == RootSymbol
 }
 
-func (n *RootNode) GetSegment() string {
+func (n *rootNode) GetSegment() string {
 	return n.segment
 }
 
-func (n *RootNode) GetValue() int {
+func (n *rootNode) GetValue() int {
 	return n.value
 }
 
-func (n *RootNode) GetChildren() []INode {
+func (n *rootNode) GetChildren() []INode {
 	return n.children
 }
 
-func (n *RootNode) SetChild(child INode) {
+func (n *rootNode) SetChild(child INode) {
 	for _, v := range n.children {
 		if v.GetSegment() == child.GetSegment() {
 			return
@@ -58,19 +58,19 @@ func (n *RootNode) SetChild(child INode) {
 	n.children = append(n.children, child)
 }
 
-func (n *RootNode) GetAction(method string) (tw.Action, bool) {
+func (n *rootNode) GetAction(method string) (tw.Action, bool) {
 	action, ok := n.handlers[strings.ToUpper(method)]
 	return action, ok
 }
 
-func (n *RootNode) SetAction(method string, action tw.Action) {
+func (n *rootNode) SetAction(method string, action tw.Action) {
 	n.handlers[strings.ToUpper(method)] = action
 }
 
-func (n *RootNode) MatchSegment(segment string) bool {
+func (n *rootNode) MatchSegment(segment string) bool {
 	return isRootNode(segment)
 }
 
-func (n *RootNode) Match(segment string, ctx tw.IContext) bool {
+func (n *rootNode) Match(segment string, ctx tw.IContext) bool {
 	return n.segment == segment
 }

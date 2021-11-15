@@ -13,7 +13,7 @@ func init() {
 	}
 }
 
-type WildcardNode struct {
+type wildcardNode struct {
 	segment  string
 	children []INode
 	handlers map[string]tw.Action
@@ -21,7 +21,7 @@ type WildcardNode struct {
 }
 
 func newWildcardNode(segment string) INode {
-	return &WildcardNode{
+	return &wildcardNode{
 		segment:  WildcardSymbol,
 		children: nil, // 通配符之后不需要子路径，因此不需要初始化
 		handlers: make(map[string]tw.Action, 2),
@@ -33,19 +33,19 @@ func isWildcardNode(segment string) bool {
 	return segment == WildcardSymbol
 }
 
-func (n *WildcardNode) GetSegment() string {
+func (n *wildcardNode) GetSegment() string {
 	return n.segment
 }
 
-func (n *WildcardNode) GetValue() int {
+func (n *wildcardNode) GetValue() int {
 	return n.value
 }
 
-func (n *WildcardNode) GetChildren() []INode {
+func (n *wildcardNode) GetChildren() []INode {
 	return n.children
 }
 
-func (n *WildcardNode) SetChild(child INode) {
+func (n *wildcardNode) SetChild(child INode) {
 	for _, v := range n.children {
 		if v.GetSegment() == child.GetSegment() {
 			return
@@ -54,20 +54,20 @@ func (n *WildcardNode) SetChild(child INode) {
 	n.children = append(n.children, child)
 }
 
-func (n *WildcardNode) GetAction(method string) (tw.Action, bool) {
+func (n *wildcardNode) GetAction(method string) (tw.Action, bool) {
 	action, ok := n.handlers[strings.ToUpper(method)]
 	return action, ok
 }
 
-func (n *WildcardNode) SetAction(method string, action tw.Action) {
+func (n *wildcardNode) SetAction(method string, action tw.Action) {
 	n.handlers[strings.ToUpper(method)] = action
 }
 
-func (n *WildcardNode) MatchSegment(segment string) bool {
+func (n *wildcardNode) MatchSegment(segment string) bool {
 	return isWildcardNode(segment)
 }
 
-func (n *WildcardNode) Match(segment string, ctx tw.IContext) bool {
+func (n *wildcardNode) Match(segment string, ctx tw.IContext) bool {
 	// 通配符完全匹配
 	return true
 }

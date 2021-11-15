@@ -11,13 +11,20 @@ import (
 	"toy-web/internal/toyrouter/factory"
 )
 
-type ToyServer struct {
-	Name   string
-	mid    []tw.Middleware
-	Router tw.IRouter
+func init() {
+	if err := Register("toy", newToyServer); err != nil {
+		log.Fatalln(err)
+	}
 }
 
-func New(name string) (*ToyServer, error) {
+type toyServer struct {
+	mid    []tw.Middleware
+	router tw.IRouter
+}
+
+var _ tw.IServer = &toyServer{}
+
+func newToyServer() (tw.IServer, error) {
 	v := loadRouter()
 	log.Printf("current router version is: %s", v)
 
@@ -26,27 +33,30 @@ func New(name string) (*ToyServer, error) {
 		return nil, err
 	}
 
-	return &ToyServer{
-		Name:   name,
-		Router: router,
+	return &toyServer{
+		router: router,
 	}, nil
 }
 
-func (ts *ToyServer) Start(addr string) error {
+func (ts *toyServer) Start(addr string) error {
 	return http.ListenAndServe(addr, ts)
 }
 
-func (ts *ToyServer) Use(middleware tw.Middleware) {
+func (ts *toyServer) Use(middleware tw.Middleware) {
 	ts.mid = append(ts.mid, middleware)
 }
 
-func (ts *ToyServer) Map(pattern, method string, action tw.Action) error {
-	return ts.Router.Map(pattern, method, action)
+func (ts *toyServer) Map(pattern, method string, action tw.Action) error {
+	return ts.router.Map(pattern, method, action)
 }
 
-func (ts *ToyServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+func (ts *toyServer) Match(path, method string, ctx tw.IContext) (tw.Action, bool) {
+	return ts.router.Match(path, method, ctx)
+}
+
+func (ts *toyServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	ctx := tc.New(w, req)
-	handler, ok := ts.Router.Match(req.URL.Path, req.Method, ctx)
+	handler, ok := ts.router.Match(req.URL.Path, req.Method, ctx)
 	if !ok {
 		if err := ctx.NotFound(fmt.Sprintf("route handler was not registed: %s", req.URL.Path)); err != nil {
 			panic(err)
@@ -58,7 +68,7 @@ func (ts *ToyServer) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	handler(ctx)
 }
 
-func (ts *ToyServer) bindMiddleware(handler tw.Action) tw.Action {
+func (ts *toyServer) bindMiddleware(handler tw.Action) tw.Action {
 	if length := len(ts.mid); length != 0 {
 		for i := length - 1; i >= 0; i-- {
 			m := ts.mid[i]

@@ -14,18 +14,18 @@ import (
 // 每段路径的segment就是树上的各个节点
 
 func init() {
-	factory.Register("v2", &ToyRouter{
+	factory.Register("v2", &toyRouter{
 		node: NewNode("/"),
 	})
 }
 
-type ToyRouter struct {
-	node *TreeNode
+type toyRouter struct {
+	node *treeNode
 }
 
-var _ tw.IRouter = &ToyRouter{}
+var _ tw.IRouter = &toyRouter{}
 
-func (t *ToyRouter) Map(pattern, method string, action tw.Action) error {
+func (t *toyRouter) Map(pattern, method string, action tw.Action) error {
 	if pattern == "/" {
 		t.node.handlers[strings.ToUpper(method)] = action
 		return nil
@@ -77,7 +77,7 @@ func pathValidator(pattern string) error {
 	return nil
 }
 
-func treeGenerator(node *TreeNode, p int, segments []string) *TreeNode {
+func treeGenerator(node *treeNode, p int, segments []string) *treeNode {
 	if p == len(segments) {
 		return node
 	}
@@ -87,7 +87,7 @@ func treeGenerator(node *TreeNode, p int, segments []string) *TreeNode {
 	return treeGenerator(cur, p+1, segments)
 }
 
-func (t *ToyRouter) Match(path, method string, ctx tw.IContext) (tw.Action, bool) {
+func (t *toyRouter) Match(path, method string, ctx tw.IContext) (tw.Action, bool) {
 	if path == "/" {
 		return t.node.handlers[method], true
 	}
@@ -96,7 +96,7 @@ func (t *ToyRouter) Match(path, method string, ctx tw.IContext) (tw.Action, bool
 	return doMatch(0, method, t.node, segments, nil)
 }
 
-func doMatch(p int, method string, cur *TreeNode, segments []string, wildcard *TreeNode) (tw.Action, bool) {
+func doMatch(p int, method string, cur *treeNode, segments []string, wildcard *treeNode) (tw.Action, bool) {
 	if p == len(segments) {
 		handlerFunc, ok := cur.handlers[method]
 		return handlerFunc, ok

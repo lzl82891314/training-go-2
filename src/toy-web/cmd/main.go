@@ -12,7 +12,7 @@ import (
 
 func main() {
 
-	server, err := toyserver.New("toy server")
+	server, err := toyserver.New("toy")
 	if err != nil {
 		panic(err)
 	}
